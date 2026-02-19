@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradish — Full Screen Flex</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0c10;
+            --shadow-light: rgba(255, 255, 255, 0.05);
+            --shadow-dark: rgba(0, 0, 0, 0.7);
+        }
+        body {
+            font-family: 'Urbanist', sans-serif;
+            background-color: var(--bg);
+            color: #f1f5f9;
+            margin: 0;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Skeuomorphic Utilities - Even more tactile */
+        .skeuo-raised {
+            background: linear-gradient(145deg, #1e222d, #14171f);
+            box-shadow: 12px 12px 24px var(--shadow-dark), 
+                        -6px -6px 16px var(--shadow-light);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .skeuo-pressed {
+            background: #0d0f14;
+            box-shadow: inset 6px 6px 12px var(--shadow-dark), 
+                        inset -3px -3px 9px var(--shadow-light);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .skeuo-button {
+            background: linear-gradient(145deg, #2a2f3e, #1a1e29);
+            box-shadow: 6px 6px 12px var(--shadow-dark), 
+                        -3px -3px 9px var(--shadow-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .skeuo-button:active {
+            background: #14171f;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), 
+                        inset -2px -2px 6px var(--shadow-light);
+            transform: translateY(2px) scale(0.97);
+        }
+        .skeuo-knob {
+            background: radial-gradient(circle at 35% 35%, #3d4459, #1a1e29);
+            box-shadow: 5px 5px 12px rgba(0,0,0,0.6), -3px -3px 8px rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+
+        .text-engraved {
+            color: rgba(255,255,255,0.6);
+            text-shadow: -1px -1px 1px rgba(0,0,0,0.9), 1px 1px 1px rgba(255,255,255,0.07);
+        }
+        .text-embossed {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .floating-nav {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: max-content;
+            max-width: 90vw;
+            z-index: 50;
+        }
+
+        /* Prevent text selection */
+        * {
+            user-select: none;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://esm.sh/lucide-react@^0.575.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.42.0",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
