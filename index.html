@@ -4,91 +4,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gradish — Full Screen Flex</title>
+    <title>Gradish — Crunchy Gradients</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Slackey&family=Fredoka:wght@300..700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0a0c10;
-            --shadow-light: rgba(255, 255, 255, 0.05);
-            --shadow-dark: rgba(0, 0, 0, 0.7);
+            --console-orange: #ff8c00;
+            --console-dark: #2a2d3e;
+            --plastic-base: #1e212b;
+            --shadow-light: rgba(255, 255, 255, 0.08);
+            --shadow-dark: rgba(0, 0, 0, 0.6);
         }
         body {
-            font-family: 'Urbanist', sans-serif;
-            background-color: var(--bg);
+            font-family: 'Fredoka', sans-serif;
+            background-color: #050505;
             color: #f1f5f9;
             margin: 0;
             overflow: hidden;
             -webkit-font-smoothing: antialiased;
         }
-        /* Skeuomorphic Utilities - Even more tactile */
-        .skeuo-raised {
-            background: linear-gradient(145deg, #1e222d, #14171f);
-            box-shadow: 12px 12px 24px var(--shadow-dark), 
-                        -6px -6px 16px var(--shadow-light);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        
+        .font-funny {
+            font-family: 'Slackey', cursive;
         }
-        .skeuo-pressed {
-            background: #0d0f14;
-            box-shadow: inset 6px 6px 12px var(--shadow-dark), 
-                        inset -3px -3px 9px var(--shadow-light);
-            border: 1px solid rgba(255, 255, 255, 0.03);
+
+        /* Physical Game Console Skeuomorphism */
+        .console-chassis {
+            background: #2a2d3e;
+            background-image: linear-gradient(180deg, #32364a 0%, #1e212b 100%);
+            border: 2px solid #454a66;
+            box-shadow: 
+                0 20px 60px rgba(0,0,0,0.9),
+                inset 0 1px 1px var(--shadow-light);
+            border-radius: 40px;
+            display: flex;
+            flex-direction: column;
         }
-        .skeuo-button {
-            background: linear-gradient(145deg, #2a2f3e, #1a1e29);
-            box-shadow: 6px 6px 12px var(--shadow-dark), 
-                        -3px -3px 9px var(--shadow-light);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+        .skeuo-raised-plastic {
+            background: linear-gradient(145deg, #32364a, #1a1c26);
+            box-shadow: 4px 4px 12px rgba(0,0,0,0.4), 
+                        -2px -2px 6px rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.05);
         }
-        .skeuo-button:active {
-            background: #14171f;
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), 
-                        inset -2px -2px 6px var(--shadow-light);
-            transform: translateY(2px) scale(0.97);
+
+        .skeuo-pressed-well {
+            background: #14161f;
+            box-shadow: inset 4px 4px 8px #08090d, 
+                        inset -2px -2px 6px rgba(255,255,255,0.03);
+            border: 1px solid rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
         }
-        .skeuo-knob {
-            background: radial-gradient(circle at 35% 35%, #3d4459, #1a1e29);
-            box-shadow: 5px 5px 12px rgba(0,0,0,0.6), -3px -3px 8px rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.07);
+
+        .skeuo-game-button {
+            background: linear-gradient(180deg, #ff9d2e 0%, #e67e00 100%);
+            box-shadow: 0 4px 0 #9e5700, 0 8px 15px rgba(0,0,0,0.4);
+            border: 1px solid #ffb35c;
+            transition: all 0.1s;
+            position: relative;
+            top: 0;
+        }
+
+        .skeuo-game-button:active {
+            top: 3px;
+            box-shadow: 0 1px 0 #9e5700, 0 2px 5px rgba(0,0,0,0.4);
+        }
+
+        .skeuo-secondary-button {
+            background: linear-gradient(180deg, #4a526b 0%, #2d3242 100%);
+            box-shadow: 0 4px 0 #181b24, 0 6px 10px rgba(0,0,0,0.3);
+            border: 1px solid #5c6685;
+            transition: all 0.1s;
+            position: relative;
+            top: 0;
+        }
+
+        .skeuo-secondary-button:active {
+            top: 3px;
+            box-shadow: 0 1px 0 #181b24, 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Rotating Knob Styles - Enhanced Realism */
+        .knob-container {
+            position: relative;
+            width: 72px;
+            height: 72px;
+            cursor: ns-resize;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
         }
         
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
+        .knob-body {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #454a66 0%, #1e212b 100%);
+            border: 3px solid #10121a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s ease-out;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
+        }
+
+        .knob-body::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.03) 0% 1%, transparent 1% 2%);
+        }
+        
+        .knob-indicator {
+            position: absolute;
+            top: 6px;
             width: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 10px;
+            height: 12px;
+            background: #ff8c00;
+            border-radius: 3px;
+            box-shadow: 0 0 10px #ff8c00, 0 0 2px rgba(0,0,0,0.5);
+            z-index: 5;
         }
 
-        .text-engraved {
-            color: rgba(255,255,255,0.6);
-            text-shadow: -1px -1px 1px rgba(0,0,0,0.9), 1px 1px 1px rgba(255,255,255,0.07);
-        }
-        .text-embossed {
-            color: #fff;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        .knob-center {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #14161f;
+            border: 2px solid #2a2d3e;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 10;
         }
 
-        .floating-nav {
+        .engraved-label {
+            color: #5c6685;
+            text-shadow: 0.5px 0.5px 0px rgba(0,0,0,0.5);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .floating-console {
             position: fixed;
-            bottom: 2rem;
+            bottom: 1.5rem;
             left: 50%;
             transform: translateX(-50%);
-            width: max-content;
-            max-width: 90vw;
+            width: 95%;
+            max-width: 1100px;
+            height: 28vh;
+            min-height: 240px;
             z-index: 50;
         }
 
-        /* Prevent text selection */
-        * {
-            user-select: none;
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Color track scrollbar */
+        .color-track-well::-webkit-scrollbar {
+            height: 4px;
+        }
+        .color-track-well::-webkit-scrollbar-track {
+            background: #08090d;
+            border-radius: 10px;
+        }
+        .color-track-well::-webkit-scrollbar-thumb {
+            background: #32364a;
+            border-radius: 10px;
+        }
+        .color-track-well::-webkit-scrollbar-thumb:hover {
+            background: #ff8c00;
+        }
+
+        /* Custom Range Slider Styles */
+        input[type="range"].vertical-slider {
+            -webkit-appearance: none;
+            writing-mode: bt-lr; 
+            appearance: slider-vertical;
+            width: 4px;
+            height: 28px;
+            background: #08090d;
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"].vertical-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 10px;
+            height: 5px;
+            border-radius: 1px;
+            background: #ff8c00;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+            border: 1px solid #ffb35c;
+        }
+
+        .color-bubble {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.2);
+            transition: transform 0.2s ease;
+        }
+        .color-bubble:hover {
+            transform: scale(1.1);
         }
     </style>
 <script type="importmap">

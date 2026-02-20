@@ -1,46 +1,44 @@
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { 
   Plus, 
   Trash2, 
   RefreshCw, 
   Download, 
   Sparkles, 
-  Maximize2, 
-  Copy, 
-  Palette, 
   RotateCcw,
   X,
-  Zap,
-  Check,
   Dices,
-  Settings,
-  ChevronUp,
-  ChevronDown
+  Joystick,
+  Gamepad2,
+  Layers,
+  Check,
+  Eye,
+  EyeOff
 } from 'lucide-react';
-import { GradientState, ColorStop, GradientType, ExportSettings } from './types';
+import { GradientState, ColorStop, ExportSettings } from './types';
 import { generateAIPalette } from './services/geminiService';
 import { downloadGradient } from './utils/exportUtils';
 
 const DEFAULT_STOPS: ColorStop[] = [
-  { id: '1', color: '#10b981', position: 0 },
-  { id: '2', color: '#3b82f6', position: 100 },
+  { id: '1', color: '#ffcc00', position: 0 },
+  { id: '2', color: '#ff0066', position: 100 },
 ];
 
 const App: React.FC = () => {
   const [gradient, setGradient] = useState<GradientState>({
     type: 'linear',
-    angle: 180,
+    angle: 145,
     stops: DEFAULT_STOPS,
   });
   const [isExporting, setIsExporting] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isConsoleHidden, setIsConsoleHidden] = useState(false);
   const [copied, setCopied] = useState(false);
   const [exportSettings, setExportSettings] = useState<ExportSettings>({
-    width: 3840,
-    height: 2160,
-    format: 'svg',
-    quality: 0.95,
+    width: 1920,
+    height: 1080,
+    format: 'png',
+    quality: 0.9,
   });
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
@@ -84,7 +82,7 @@ const App: React.FC = () => {
     const newStops = Array.from({ length: count }, (_, i) => ({
       id: Math.random().toString(36).substr(2, 9),
       color: '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
-      position: (i / (count - 1)) * 100,
+      position: Math.round((i / (count - 1)) * 100),
     }));
     setGradient(prev => ({
       ...prev,
@@ -102,7 +100,7 @@ const App: React.FC = () => {
       const newStops = result.colors.map((color, i) => ({
         id: Math.random().toString(36).substr(2, 9),
         color,
-        position: (i / (result.colors.length - 1)) * 100,
+        position: Math.round((i / (result.colors.length - 1)) * 100),
       }));
       setGradient(prev => ({ ...prev, stops: newStops }));
     }
@@ -122,264 +120,256 @@ const App: React.FC = () => {
     setHistory(rest);
   };
 
+  const knobRef = useRef<HTMLDivElement>(null);
+  const isDraggingKnob = useRef(false);
+
+  const startDragging = (e: React.MouseEvent | React.TouchEvent) => {
+    isDraggingKnob.current = true;
+    document.addEventListener('mousemove', handleDragging);
+    document.addEventListener('mouseup', stopDragging);
+    document.addEventListener('touchmove', handleDragging as any);
+    document.addEventListener('touchend', stopDragging);
+  };
+
+  const stopDragging = () => {
+    isDraggingKnob.current = false;
+    document.removeEventListener('mousemove', handleDragging);
+    document.removeEventListener('mouseup', stopDragging);
+    document.removeEventListener('touchmove', handleDragging as any);
+    document.removeEventListener('touchend', stopDragging);
+  };
+
+  const handleDragging = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isDraggingKnob.current || !knobRef.current) return;
+    const rect = knobRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI) + 90;
+    const normalizedAngle = (angle + 360) % 360;
+    setGradient(prev => ({ ...prev, angle: Math.round(normalizedAngle), type: 'linear' }));
+  }, []);
+
+  const toggleType = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setGradient(prev => ({ ...prev, type: prev.type === 'linear' ? 'radial' : 'linear' }));
+  };
+
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
-      {/* Full Screen Gradient - The Hero */}
+    <div className="relative h-screen w-screen overflow-hidden bg-black flex flex-col items-center">
+      <div className="absolute inset-0 transition-all duration-700 ease-in-out" style={{ background: cssGradient }} />
+
+      {/* MINI HANDHELD LOGO CONSOLE */}
+      <div className={`absolute top-6 left-6 z-10 pointer-events-none transition-all duration-500 ${isConsoleHidden ? 'opacity-20 scale-90 translate-x-[-10px]' : 'opacity-100'}`}>
+        <div className="console-chassis w-max p-1.5 rounded-xl flex items-center shadow-2xl border-2 border-white/5">
+          {/* Mini Screen Area */}
+          <div className="skeuo-pressed-well px-3 py-1.5 rounded-lg flex flex-col items-start border-2 border-black/40">
+             <h1 className="text-3xl font-funny text-white leading-none tracking-tight text-embossed">Gradish!</h1>
+             <div className="flex items-center gap-2 mt-1">
+                <p className="text-[7px] font-bold text-indigo-300/60 uppercase tracking-[0.2em] leading-none">
+                  nom nom your colours
+                </p>
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] animate-pulse"></div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* REVEAL HANDLE */}
+      <button 
+        onClick={() => setIsConsoleHidden(false)}
+        className={`fixed bottom-0 z-[60] bg-[#2a2d3e] px-10 py-4 rounded-t-3xl border-t-2 border-x-2 border-[#454a66] shadow-[0_-5px_25px_rgba(0,0,0,0.6)] transition-all duration-500 hover:py-6 flex flex-col items-center gap-1 group ${isConsoleHidden ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}
+      >
+        <Eye className="w-6 h-6 text-orange-400 animate-pulse group-hover:scale-110 transition-transform" />
+        <span className="engraved-label text-[7px] text-orange-400/50 uppercase font-black">Open Lab</span>
+      </button>
+
+      {/* MAIN CONSOLE CONTAINER */}
       <div 
-        className="absolute inset-0 transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1)"
-        style={{ background: cssGradient }}
-      />
-      
-      {/* Subtle Hardware Overlay */}
-      <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_center,#fff_0.5px,transparent_0.5px)] bg-[size:32px_32px]"></div>
-
-      {/* Floating Sassy Header */}
-      <div className="absolute top-10 left-10 flex items-center gap-5">
-        <div className="skeuo-knob p-3 rounded-2xl">
-          <img 
-            src="https://api.screenshotone.com/v1/screenshot?url=https%3A%2F%2Fstorage.googleapis.com%2Fai-studio-images%2F6746973e-07a8-4e0d-85ca-8c764e43e215.png&access_key=dummy" 
-            className="w-10 h-10 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]"
-            alt="Gradish Carrot"
-            onError={(e) => {
-              // Fallback if the image URL is not directly accessible
-              (e.target as HTMLImageElement).src = 'https://raw.githubusercontent.com/lucide-react/lucide/main/icons/carrot.svg';
-            }}
-          />
-        </div>
-        <div className="flex flex-col gap-0">
-          <h1 className="text-4xl font-black text-white text-embossed tracking-tighter italic leading-none">GRADISH.</h1>
-          <p className="text-[10px] font-bold text-black/60 uppercase tracking-[0.35em] bg-white/25 backdrop-blur-lg px-3 py-1 rounded-full w-max mt-1">
-            Stay crunchy, blend gracefully
-          </p>
-        </div>
-      </div>
-
-      {/* Quick Action Top Right */}
-      <div className="absolute top-10 right-10 flex gap-4">
-        <button 
-          onClick={copyCss}
-          className="skeuo-button h-12 px-6 rounded-2xl flex items-center gap-3 text-xs font-black uppercase tracking-widest text-white"
-        >
-          {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-          {copied ? 'SNAGGED IT' : 'STEAL CSS'}
-        </button>
-      </div>
-
-      {/* The Floating Nav Control Panel */}
-      <div className="floating-nav">
-        <div className={`skeuo-raised p-4 rounded-[2.5rem] border border-white/10 flex flex-col gap-4 transition-all duration-500 ease-in-out ${isPanelOpen ? 'mb-4 translate-y-0' : 'translate-y-2'}`}>
+        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) ${isConsoleHidden ? 'translate-y-[120%] opacity-0 scale-90' : 'translate-y-0 opacity-100 scale-100'}`}
+      >
+        <div className="console-chassis h-full w-max max-w-[95vw] px-6 py-4 flex flex-col items-center relative transition-all duration-500">
           
-          {/* Expanded Controls Area */}
-          {isPanelOpen && (
-            <div className="p-4 flex flex-col md:flex-row gap-8 animate-in slide-in-from-bottom-4 duration-300">
-              
-              {/* AI Brain */}
-              <div className="w-full md:w-64 space-y-4">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-engraved">Neuro-Link</label>
-                <div className="skeuo-pressed rounded-2xl p-1 flex items-center pr-2">
-                  <input 
-                    type="text" 
-                    placeholder="Describe your mood..."
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    className="bg-transparent border-none px-4 py-3 text-sm font-bold text-white focus:outline-none w-full"
-                  />
-                  <button 
-                    onClick={handleAiGenerate}
-                    disabled={isAiLoading}
-                    className="skeuo-button p-2.5 rounded-xl disabled:opacity-50"
-                  >
-                    {isAiLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-indigo-400" />}
-                  </button>
+          {/* Status Bar */}
+          <div className="flex justify-between items-center mb-3 px-2 w-full">
+            <div className="flex gap-4 items-center">
+               <span className="engraved-label text-[9px]">SESSION: I/O_01</span>
+               <div className="w-px h-3 bg-white/10" />
+               <div className="flex gap-1.5 items-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse"></div>
+                  <span className="engraved-label text-emerald-400/80 text-[9px]">ACTIVE</span>
+               </div>
+            </div>
+
+            <div className="flex gap-4 items-center">
+              <span className="engraved-label text-[9px]">V_2.5_LAB</span>
+            </div>
+          </div>
+
+          {/* MAIN CONTENT ROW - MIDDLE ALIGNED & TRULY RESPONSIVE */}
+          <div className="flex justify-center flex-row gap-5 items-center w-full min-h-[160px]">
+            
+            {/* AI Prompt Section - Centered content */}
+            <div className="w-40 flex flex-col gap-3 shrink-0">
+              <div className="skeuo-pressed-well p-2.5 rounded-2xl h-24 flex flex-col shrink-0">
+                <span className="engraved-label text-[8px] mb-1 opacity-50 uppercase">PROMPT</span>
+                <textarea 
+                  placeholder="Vibe..."
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  className="w-full bg-transparent border-none resize-none text-[12px] font-bold text-indigo-300 placeholder:text-indigo-900/40 focus:outline-none flex-1 no-scrollbar leading-tight"
+                />
+              </div>
+              <button onClick={handleAiGenerate} disabled={isAiLoading} className="skeuo-game-button h-8 rounded-xl flex items-center justify-center gap-2 shrink-0">
+                {isAiLoading ? <RefreshCw className="w-3.5 h-3.5 text-white animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-white" />}
+                <span className="font-funny text-[10px] text-white uppercase">Sync</span>
+              </button>
+            </div>
+
+            {/* Mixer Section - Shrinks/Grows based on modules */}
+            <div className="flex-initial bg-white/5 rounded-3xl p-2 border border-white/5 flex gap-4 items-center overflow-hidden transition-all duration-500">
+              {/* Knob Controller */}
+              <div className="flex flex-col items-center justify-center gap-1 shrink-0 bg-black/20 rounded-2xl px-4 py-4">
+                <div ref={knobRef} onMouseDown={startDragging} onTouchStart={startDragging} className="knob-container scale-[0.85]">
+                    <div className="knob-body" style={{ transform: `rotate(${gradient.type === 'linear' ? gradient.angle : 0}deg)` }}>
+                        {gradient.type === 'linear' && <div className="knob-indicator"></div>}
+                        <button onClick={toggleType} className="knob-center hover:scale-105 active:scale-95 transition-transform shadow-2xl">
+                            {gradient.type === 'linear' ? <Joystick className="w-4 h-4 text-indigo-400" /> : <Gamepad2 className="w-4 h-4 text-orange-400" />}
+                        </button>
+                    </div>
+                </div>
+                <div className="text-center mt-1">
+                   <span className="engraved-label text-[7px] block text-orange-500/80 uppercase tracking-tighter leading-none">{gradient.type}</span>
+                   <span className="font-mono text-[10px] font-black text-white">{gradient.type === 'linear' ? `${gradient.angle}°` : 'RAD'}</span>
                 </div>
               </div>
 
-              {/* Angle & Type */}
-              <div className="space-y-4">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-engraved">Topography</label>
-                <div className="flex gap-2">
-                  {(['linear', 'radial'] as GradientType[]).map(t => (
-                    <button 
-                      key={t}
-                      onClick={() => setGradient(prev => ({ ...prev, type: t }))}
-                      className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${gradient.type === t ? 'skeuo-pressed text-white' : 'skeuo-button text-slate-400'}`}
-                    >
-                      {t}
-                    </button>
-                  ))}
+              {/* Dynamic Color Track - Horizontal scroll only if it hits screen limits */}
+              <div className="flex-1 flex flex-col min-w-0">
+                <div className="flex justify-between items-center px-1 mb-1">
+                  <span className="engraved-label text-[8px] opacity-60 uppercase">MIXER</span>
+                  <span className="engraved-label text-[7px]">{gradient.stops.length} MODS</span>
                 </div>
-                {gradient.type === 'linear' && (
-                  <div className="skeuo-pressed p-4 rounded-2xl flex items-center gap-4">
-                    <input 
-                      type="range" min="0" max="360" value={gradient.angle}
-                      onChange={(e) => setGradient(prev => ({ ...prev, angle: parseInt(e.target.value) }))}
-                      className="w-32 accent-indigo-500"
-                    />
-                    <span className="text-xs font-black font-mono text-indigo-400">{gradient.angle}°</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Color Mixer */}
-              <div className="flex-1 space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-engraved">The Palette</label>
-                  <button onClick={addStop} className="skeuo-button p-1.5 rounded-lg text-slate-400 hover:text-white">
-                    <Plus className="w-3 h-3" />
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-4 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+                <div className="skeuo-pressed-well p-2 rounded-2xl flex flex-row gap-3 items-center justify-start border border-black/40 shadow-inner overflow-x-auto color-track-well pb-3 scroll-smooth">
                   {gradient.stops.map(stop => (
-                    <div key={stop.id} className="skeuo-raised p-2 rounded-2xl flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl skeuo-knob relative overflow-hidden">
+                    <div key={stop.id} className="skeuo-raised-plastic p-2 rounded-xl shrink-0 flex flex-col items-center justify-between w-14 h-32 relative group transition-all duration-300">
+                      <div className="w-9 h-9 rounded-full color-bubble border-2 border-black/80 relative overflow-hidden shrink-0 shadow-lg">
                         <input 
-                          type="color" value={stop.color} 
-                          onChange={(e) => updateStop(stop.id, { color: e.target.value })}
-                          className="absolute inset-0 scale-150 cursor-pointer"
+                          type="color" 
+                          value={stop.color} 
+                          onChange={(e) => updateStop(stop.id, { color: e.target.value })} 
+                          className="absolute inset-0 scale-[10] cursor-pointer" 
                         />
                       </div>
-                      <input 
-                        type="range" min="0" max="100" value={stop.position}
-                        onChange={(e) => updateStop(stop.id, { position: parseInt(e.target.value) })}
-                        className="w-16 accent-slate-400"
-                      />
-                      <button onClick={() => removeStop(stop.id)} disabled={gradient.stops.length <= 2} className="text-rose-900/50 hover:text-rose-500 p-1 disabled:opacity-0">
+
+                      <div className="flex-1 flex flex-col items-center justify-center gap-1 w-full my-1.5">
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="100" 
+                          value={stop.position} 
+                          onChange={(e) => updateStop(stop.id, { position: parseInt(e.target.value) })} 
+                          className="vertical-slider h-12" 
+                          style={{ appearance: 'slider-vertical' } as any}
+                        />
+                        <span className="font-mono text-[8px] text-white/50 font-bold">{stop.position}%</span>
+                      </div>
+
+                      <button 
+                        onClick={() => removeStop(stop.id)} 
+                        disabled={gradient.stops.length <= 2} 
+                        className="text-white/10 hover:text-red-500 disabled:opacity-0 transition-colors p-0.5"
+                      >
                         <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
                   ))}
+
+                  {/* Add Slot Button */}
+                  {gradient.stops.length < 8 && (
+                    <button 
+                      onClick={addStop} 
+                      className="skeuo-raised-plastic h-32 rounded-xl shrink-0 flex flex-col items-center justify-center gap-1 w-14 border-dashed border-2 border-white/10 hover:border-orange-500/40 hover:bg-white/5 transition-all group"
+                    >
+                      <Plus className="w-5 h-5 text-white/30 group-hover:text-orange-400 group-hover:scale-125 transition-transform" />
+                      <span className="engraved-label text-[6px] text-white/20 uppercase tracking-tight group-hover:text-white/40">Inject</span>
+                    </button>
+                  )}
                 </div>
               </div>
-
             </div>
-          )}
 
-          {/* Persistent Action Bar */}
-          <div className="flex items-center gap-3 md:gap-6 px-2">
-            
+            {/* Actions Section - Centered content */}
+            <div className="w-32 flex flex-col gap-3 shrink-0">
+               <div className="flex gap-2 shrink-0 h-14">
+                  <button onClick={randomize} className="skeuo-game-button flex-1 rounded-2xl flex flex-col items-center justify-center gap-1 group">
+                    <Dices className="w-4 h-4 text-white group-hover:rotate-45 transition-transform" />
+                    <span className="font-funny text-[9px] text-white uppercase leading-none">Spice</span>
+                  </button>
+                  <button onClick={undo} disabled={history.length === 0} className="skeuo-secondary-button w-10 rounded-2xl flex items-center justify-center disabled:opacity-20 active:scale-95">
+                    <RotateCcw className="w-3.5 h-3.5 text-white" />
+                  </button>
+               </div>
+               <button onClick={() => setIsExporting(true)} className="skeuo-game-button h-10 rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] shrink-0" style={{ backgroundImage: 'linear-gradient(180deg, #34d399 0%, #065f46 100%)', boxShadow: '0 3px 0 #064e3b, 0 6px 10px rgba(0,0,0,0.5)', borderColor: '#6ee7b7' }}>
+                <Download className="w-4 h-4 text-white" />
+                <span className="font-funny text-[12px] text-white uppercase tracking-tight">Export</span>
+              </button>
+            </div>
+          </div>
+
+          {/* FOOTER BAR */}
+          <div className="flex items-center justify-between px-2 mt-4 h-6 border-t border-white/5 pt-2 w-full">
+            {/* Left: Branding */}
+            <span className="engraved-label opacity-40 text-[8px]">@2026 Gradish labs</span>
+
+            {/* Middle: Hide Console Toggle - Centered as requested */}
             <button 
-              onClick={() => setIsPanelOpen(!isPanelOpen)}
-              className="skeuo-button h-14 w-14 rounded-full flex items-center justify-center shrink-0 group"
+              onClick={() => setIsConsoleHidden(true)}
+              className="flex items-center gap-2 px-4 h-full bg-black/20 hover:bg-black/40 rounded-full border border-white/5 transition-all group"
             >
-              {isPanelOpen ? <ChevronDown className="w-5 h-5 text-indigo-400 group-hover:translate-y-0.5 transition-transform" /> : <ChevronUp className="w-5 h-5 text-indigo-400 group-hover:-translate-y-0.5 transition-transform" />}
+              <EyeOff className="w-3 h-3 text-orange-500 group-hover:scale-110 transition-transform" />
+              <span className="engraved-label text-[8px] opacity-40 group-hover:opacity-100 transition-opacity">Hide Lab</span>
             </button>
 
-            <div className="w-px h-8 bg-white/5 hidden md:block" />
-
-            <div className="flex items-center gap-3 flex-1">
-              <button 
-                onClick={randomize}
-                className="skeuo-button h-14 px-6 rounded-[1.5rem] flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-white flex-1 md:flex-none justify-center"
-              >
-                <Dices className="w-4 h-4 text-indigo-400" />
-                <span className="hidden md:inline">SURPRISE ME</span>
-                <span className="md:hidden">CHAOS</span>
-              </button>
-              <button 
-                onClick={undo}
-                disabled={history.length === 0}
-                className="skeuo-button h-14 px-5 rounded-[1.5rem] flex items-center justify-center disabled:opacity-20"
-                title="Oops, I messed up"
-              >
-                <RotateCcw className="w-4 h-4 text-slate-500" />
-              </button>
-            </div>
-
-            <button 
-              onClick={() => setIsExporting(true)}
-              className="skeuo-button h-14 px-8 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[1.5rem] flex items-center gap-3 text-xs font-black uppercase tracking-[0.3em] text-white shadow-lg hover:shadow-indigo-500/20"
-            >
-              <Download className="w-5 h-5" />
-              <span className="hidden md:inline">EXPORT ARTWORK</span>
-              <span className="md:hidden">SAVE</span>
+            {/* Right: Source Copy Button - Moved to right as requested */}
+            <button onClick={copyCss} className="flex items-center gap-2 px-3 h-full bg-black/50 rounded-full text-[8px] font-black text-indigo-400 hover:text-white transition-all uppercase tracking-[0.1em] border border-white/5">
+              {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Layers className="w-3 h-3" />}
+              {copied ? 'Copied' : 'Source'}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Export System Overlay */}
       {isExporting && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsExporting(false)} />
-          <div className="relative w-full max-w-lg skeuo-raised rounded-[3rem] p-10 border border-white/10 shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="flex justify-between items-center mb-10">
-              <div>
-                <h3 className="text-2xl font-black text-white text-embossed tracking-tight uppercase">THE GOOD STUFF</h3>
-                <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.3em] mt-2">Pick your poison</p>
-              </div>
-              <button onClick={() => setIsExporting(false)} className="skeuo-button p-3 rounded-2xl text-slate-400">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="space-y-10">
-              <div className="grid grid-cols-3 gap-4">
-                {(['png', 'jpeg', 'svg'] as const).map(f => (
-                  <button 
-                    key={f} onClick={() => setExportSettings(prev => ({ ...prev, format: f }))}
-                    className={`py-4 rounded-2xl font-black text-xs uppercase tracking-widest ${exportSettings.format === f ? 'skeuo-pressed text-indigo-400' : 'skeuo-button text-slate-400'}`}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-
-              {exportSettings.format !== 'svg' && (
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-engraved">Chonky Width</label>
-                    <div className="skeuo-pressed p-4 rounded-2xl">
-                      <input 
-                        type="number" value={exportSettings.width}
-                        onChange={(e) => setExportSettings(prev => ({ ...prev, width: parseInt(e.target.value) }))}
-                        className="bg-transparent text-white font-black w-full outline-none"
-                      />
-                    </div>
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={() => setIsExporting(false)} />
+          <div className="relative w-full max-w-md skeuo-raised-plastic p-8 rounded-[3.5rem] border-4 border-indigo-900/50 animate-in zoom-in-95 duration-200">
+             <div className="flex justify-between items-center mb-6">
+               <h3 className="text-2xl font-funny text-white uppercase tracking-tight">Shipping Depot</h3>
+               <button onClick={() => setIsExporting(false)} className="skeuo-secondary-button p-2 rounded-xl active:scale-90"><X className="w-5 h-5 text-white" /></button>
+             </div>
+             <div className="space-y-6">
+                <div className="flex gap-2">
+                  {(['png', 'jpeg', 'svg'] as const).map(f => (
+                    <button key={f} onClick={() => setExportSettings(prev => ({ ...prev, format: f }))} className={`flex-1 py-3 rounded-xl font-black uppercase text-[11px] transition-all ${exportSettings.format === f ? 'skeuo-pressed-well text-orange-400 border-orange-500/30' : 'skeuo-secondary-button text-white/60'}`}>{f}</button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="skeuo-pressed-well p-3 rounded-xl">
+                    <label className="engraved-label block mb-1 text-[9px]">OUTPUT_WIDE</label>
+                    <input type="number" value={exportSettings.width} onChange={(e) => setExportSettings(prev => ({ ...prev, width: parseInt(e.target.value) }))} className="bg-transparent text-white font-black w-full outline-none font-mono text-lg" />
                   </div>
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-engraved">Tall Height</label>
-                    <div className="skeuo-pressed p-4 rounded-2xl">
-                      <input 
-                        type="number" value={exportSettings.height}
-                        onChange={(e) => setExportSettings(prev => ({ ...prev, height: parseInt(e.target.value) }))}
-                        className="bg-transparent text-white font-black w-full outline-none"
-                      />
-                    </div>
+                  <div className="skeuo-pressed-well p-3 rounded-xl">
+                    <label className="engraved-label block mb-1 text-[9px]">OUTPUT_TALL</label>
+                    <input type="number" value={exportSettings.height} onChange={(e) => setExportSettings(prev => ({ ...prev, height: parseInt(e.target.value) }))} className="bg-transparent text-white font-black w-full outline-none font-mono text-lg" />
                   </div>
                 </div>
-              )}
-
-              {exportSettings.format === 'svg' && (
-                <div className="skeuo-pressed p-6 rounded-3xl border border-indigo-500/20">
-                  <p className="text-xs font-black text-white uppercase tracking-wider mb-2 flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-indigo-400 fill-indigo-400" /> Vector Vibes
-                  </p>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase leading-relaxed tracking-wide">
-                    Infinity zoom. Tiny file size. Maximum flex. Use this for web stuff or if you're fancy.
-                  </p>
-                </div>
-              )}
-
-              <button 
-                onClick={async () => {
-                  await downloadGradient(gradient, exportSettings);
-                  setIsExporting(false);
-                }}
-                className="w-full skeuo-button py-6 bg-white text-slate-950 rounded-3xl font-black text-sm uppercase tracking-[0.4em] transition-all hover:translate-y-[-2px]"
-              >
-                SHIP IT
-              </button>
-            </div>
+                <button onClick={async () => { await downloadGradient(gradient, exportSettings); setIsExporting(false); }} className="w-full skeuo-game-button py-5 rounded-2xl font-funny text-xl text-white uppercase shadow-2xl hover:brightness-110 active:scale-[0.97]">Deliver</button>
+             </div>
           </div>
         </div>
       )}
-
-      {/* Little Sassy Footer */}
-      <div className="absolute bottom-10 left-10 hidden lg:block">
-        <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.5em]">
-          Hand-crafted with vitamin A / v1.6 / Full Screen Flex
-        </p>
-      </div>
     </div>
   );
 };
